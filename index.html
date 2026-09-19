@@ -37,7 +37,27 @@
   }
   main { max-width: 720px; margin: 0 auto; padding: 20px 14px 40px; }
   h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  p.sub { margin: 0 0 16px; color: var(--muted); font-size: 0.95rem; }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  .bar button {
+    font: inherit;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-height: 40px;
+  }
+  .bar button:active { background: var(--accent); color: var(--accent-ink); }
+  .bar button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   table {
     width: 100%;
@@ -46,14 +66,16 @@
   }
   th, td { border: 1px solid var(--rule); padding: 0; text-align: left; }
   th {
-    padding: 10px 12px;
+    padding: 10px 8px;
     font-size: 1rem;
     text-align: center;
     border-bottom: 2px solid var(--rule);
   }
-  th.num, td.num { width: 64px; text-align: center; }
+  th.num, td.num { width: 60px; text-align: center; }
+  th.chk, td.chk { width: 60px; text-align: center; }
   tbody tr:nth-child(odd) td { background: var(--band); }
   td.name { padding: 0 12px; font-size: 1.05rem; }
+  tr.done td.name { color: var(--muted); }
 
   td.num a {
     display: flex;
@@ -69,16 +91,35 @@
   td.num a:hover { background: var(--accent); color: var(--accent-ink); text-decoration: none; }
   td.num a:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
   td.num a:active { background: var(--accent); color: var(--accent-ink); }
+
+  td.chk label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    cursor: pointer;
+  }
+  td.chk input {
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  td.chk input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
 <main>
   <h1>TFE List</h1>
-  <p class="sub">Tap a number to open its PDF.</p>
+  <div class="bar">
+    <span id="count" aria-live="polite"></span>
+    <button type="button" id="clear">Clear all checks</button>
+  </div>
 
   <table>
     <thead>
-      <tr><th class="num">#</th><th>TFE Name</th></tr>
+      <tr><th class="num">#</th><th class="chk"><span aria-label="Checked">&#10003;</span></th><th>TFE Name</th></tr>
     </thead>
     <tbody id="rows"></tbody>
   </table>
@@ -87,11 +128,11 @@
 <script>
   // ---- Settings -------------------------------------------------------
   // Put the PDFs in this folder next to index.html, named 1.pdf, 2.pdf ... 20.pdf.
-  // Change the folder or the file-name pattern here if yours are different.
   const PDF_FOLDER = "pdfs/";
   const pdfFor = (n) => `${PDF_FOLDER}${n}.pdf`;
   // Example for two-digit names (01.pdf, 02.pdf ...):
   // const pdfFor = (n) => `${PDF_FOLDER}${String(n).padStart(2, "0")}.pdf`;
+  const STORAGE_KEY = "fall-festival-2026-checks";
   // ---------------------------------------------------------------------
 
   const names = [
@@ -117,10 +158,24 @@
     "Rootline Community Initiative"
   ];
 
+  // Checks are saved in this browser on this device only.
+  let checked = {};
+  try { checked = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { checked = {}; }
+  const save = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checked)); } catch (e) {} };
+
   const tbody = document.getElementById("rows");
+  const countEl = document.getElementById("count");
+  const boxes = [];
+
+  function updateCount() {
+    const done = names.filter((_, i) => checked[i + 1]).length;
+    countEl.textContent = `${done} of ${names.length} checked`;
+  }
+
   names.forEach((name, i) => {
     const n = i + 1;
     const tr = document.createElement("tr");
+    if (checked[n]) tr.className = "done";
 
     const tdNum = document.createElement("td");
     tdNum.className = "num";
@@ -132,13 +187,40 @@
     a.setAttribute("aria-label", `Open PDF ${n}: ${name}`);
     tdNum.appendChild(a);
 
+    const tdChk = document.createElement("td");
+    tdChk.className = "chk";
+    const label = document.createElement("label");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = !!checked[n];
+    box.setAttribute("aria-label", `Mark ${n} as checked: ${name}`);
+    box.addEventListener("change", () => {
+      if (box.checked) checked[n] = true; else delete checked[n];
+      tr.classList.toggle("done", box.checked);
+      save();
+      updateCount();
+    });
+    label.appendChild(box);
+    tdChk.appendChild(label);
+    boxes.push({ box, tr });
+
     const tdName = document.createElement("td");
     tdName.className = "name";
     tdName.textContent = name;
 
-    tr.append(tdNum, tdName);
+    tr.append(tdNum, tdChk, tdName);
     tbody.appendChild(tr);
   });
+
+  document.getElementById("clear").addEventListener("click", () => {
+    if (!confirm("Clear all checks?")) return;
+    checked = {};
+    boxes.forEach(({ box, tr }) => { box.checked = false; tr.classList.remove("done"); });
+    save();
+    updateCount();
+  });
+
+  updateCount();
 </script>
 </body>
 </html>
