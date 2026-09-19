@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TFE List</title>
+<style>
+  :root {
+    --ink: #14181f;
+    --muted: #5b6472;
+    --paper: #ffffff;
+    --band: #eef1f5;
+    --rule: #14181f;
+    --accent: #1f3a5f;
+    --accent-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #eef1f5;
+      --muted: #9aa4b2;
+      --paper: #12161c;
+      --band: #1b212a;
+      --rule: #eef1f5;
+      --accent: #8fb4e8;
+      --accent-ink: #0d1218;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+    line-height: 1.35;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 20px 14px 40px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  p.sub { margin: 0 0 16px; color: var(--muted); font-size: 0.95rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid var(--rule);
+  }
+  th, td { border: 1px solid var(--rule); padding: 0; text-align: left; }
+  th {
+    padding: 10px 12px;
+    font-size: 1rem;
+    text-align: center;
+    border-bottom: 2px solid var(--rule);
+  }
+  th.num, td.num { width: 64px; text-align: center; }
+  tbody tr:nth-child(odd) td { background: var(--band); }
+  td.name { padding: 0 12px; font-size: 1.05rem; }
+
+  td.num a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  td.num a:hover { background: var(--accent); color: var(--accent-ink); text-decoration: none; }
+  td.num a:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  td.num a:active { background: var(--accent); color: var(--accent-ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>TFE List</h1>
+  <p class="sub">Tap a number to open its PDF.</p>
+
+  <table>
+    <thead>
+      <tr><th class="num">#</th><th>TFE Name</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</main>
+
+<script>
+  // ---- Settings -------------------------------------------------------
+  // Put the PDFs in this folder next to index.html, named 1.pdf, 2.pdf ... 20.pdf.
+  // Change the folder or the file-name pattern here if yours are different.
+  const PDF_FOLDER = "pdfs/";
+  const pdfFor = (n) => `${PDF_FOLDER}${n}.pdf`;
+  // Example for two-digit names (01.pdf, 02.pdf ...):
+  // const pdfFor = (n) => `${PDF_FOLDER}${String(n).padStart(2, "0")}.pdf`;
+  // ---------------------------------------------------------------------
+
+  const names = [
+    "Humphreys Cub Scout Pack 42 Fall Fest Lemon Shake Ups",
+    "KUSINA NI LAKAY",
+    "LeahCole's Delights",
+    "LAMBDA XI FISH HUT",
+    "Camp Humphreys / Site: Walkin Gate",
+    "Camp Humphreys / Site: Walkin Gate",
+    "607 CWS Booster Club",
+    "502D TAKOYAKI",
+    "Humphreys United Club",
+    "6-52 ADA BN Foodstand",
+    "Humphreys Fall Festival(AAFES)",
+    "A Few Good Men",
+    "SERGEANT AUDIE MURPHY CLUB",
+    "FOOD TRUCK HOUSE",
+    "Family & MWR Contractor Jaggers",
+    "MWR Contractor Maple Group",
+    "MWR/River Bend Pub",
+    "Family & MWR Contractor Texas Roadhouse",
+    "Monstera Coffee Works",
+    "Rootline Community Initiative"
+  ];
+
+  const tbody = document.getElementById("rows");
+  names.forEach((name, i) => {
+    const n = i + 1;
+    const tr = document.createElement("tr");
+
+    const tdNum = document.createElement("td");
+    tdNum.className = "num";
+    const a = document.createElement("a");
+    a.href = pdfFor(n);
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = n;
+    a.setAttribute("aria-label", `Open PDF ${n}: ${name}`);
+    tdNum.appendChild(a);
+
+    const tdName = document.createElement("td");
+    tdName.className = "name";
+    tdName.textContent = name;
+
+    tr.append(tdNum, tdName);
+    tbody.appendChild(tr);
+  });
+</script>
+</body>
+</html>
